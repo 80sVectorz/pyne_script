@@ -1,4 +1,5 @@
 import __future__
+from typing import Any
 import copy
 import numpy as np
 
@@ -416,6 +417,16 @@ class Series:
         else:
             raise InvalidSeriesIndex()
 
+    def __getattribute__(self, __name: str) -> Any:
+        keys = None
+        try:
+            keys = object.__getattribute__(self,"keys")
+        except:
+            pass
+        if keys and __name in keys:
+            return self.__getitem__(__name)
+        return object.__getattribute__(self,__name)
+
     def __setitem__(self, key: str | int, value: int | float) -> None:
         if isinstance(key, list | tuple):
             raise InvalidSeriesIndex
@@ -428,6 +439,17 @@ class Series:
                 raise NonExistentHead(key, "set")
         else:
             raise InvalidSeriesIndex()
+
+    def __setattr__(self, __name: str, __value: Any) -> None:
+        keys = None
+        try:
+            keys = object.__getattribute__(self,"keys")
+        except:
+            pass
+        if keys and __name in keys:
+            self.__setitem__(__name,__value)
+            return
+        object.__setattr__(self,__name,__value)
 
 
 class PyneSeriesException(Exception):

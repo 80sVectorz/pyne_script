@@ -25,8 +25,8 @@ def draw(series: Series, clear=False) -> None:
     hist_max = 0
 
     for i in range(window_width):
-        hist_min = min(hist_min, series["low"][i])
-        hist_max = max(hist_max, series["high"][i])
+        hist_min = min(hist_min, series.low[i])
+        hist_max = max(hist_max, series.high[i])
 
     full_range = hist_max - hist_min
 
@@ -39,11 +39,11 @@ def draw(series: Series, clear=False) -> None:
         for collumn in range(window_width):
             character = " "
 
-            direction = series["direction"][window_width - collumn]
-            open_point = to_screen(series["open"][window_width - collumn])
-            close_point = to_screen(series["close"][window_width - collumn])
-            high_point = to_screen(series["high"][window_width - collumn])
-            low_point = to_screen(series["low"][window_width - collumn])
+            direction = series.direction[window_width - collumn]
+            open_point = to_screen(series.open[window_width - collumn])
+            close_point = to_screen(series.close[window_width - collumn])
+            high_point = to_screen(series.high[window_width - collumn])
+            low_point = to_screen(series.low[window_width - collumn])
             body_range = list(
                 range(min([open_point, close_point]), max([open_point, close_point]))
             )
@@ -90,18 +90,18 @@ symbol = Series(
 )
 
 for i in range(length):
-    symbol["open"] = symbol["close"]
-    symbol["close"] = symbol["open"] + random.uniform(-1, 1)
-    symbol["direction"] = 1
-    if symbol["open"] > symbol["close"]:
-        symbol["direction"] = -1
+    symbol.open = symbol.close
+    symbol.close = symbol.open + random.uniform(-1, 1)
+    symbol.direction = 1
+    if symbol.open > symbol.close:
+        symbol.direction = -1
 
-    candle_size = abs(symbol["close"] - symbol["open"])
-    candle_bottom = min([symbol["open"], symbol["close"]])
-    candle_top = max([symbol["open"], symbol["close"]])
+    candle_size = abs(symbol.close - symbol.open)
+    candle_bottom = min([symbol.open, symbol.close])
+    candle_top = max([symbol.open, symbol.close])
 
-    symbol["low"] = candle_bottom - candle_size * random.uniform(0, 1)
-    symbol["high"] = candle_top + candle_size * random.uniform(0, 1)
+    symbol.low = candle_bottom - candle_size * random.uniform(0, 1)
+    symbol.high = candle_top + candle_size * random.uniform(0, 1)
     symbol.update()
 
     if i > window_width:
