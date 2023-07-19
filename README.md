@@ -7,7 +7,7 @@ Pyne Script aims to offer a set of utility sub-modules that allow for code struc
 Use the package manager [pip](https://pip.pypa.io/en/stable/) to install pyne_script.
 
 ```bash
-pip install pyne_script
+pip install Pyne-script-utilities
 ```
 
 ## Available sub-modules
