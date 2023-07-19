@@ -9,7 +9,7 @@ series = Series(
 # "a" should look like this : past<-[0,1,2,3,4,5,.]->future
 #                                              ^ ^
 #                                              | |-After update the head moves here
-#                                              |- Head is currenty here. Update would finalize this value
+#                                              |- Head is currently here. Update would finalize this value
 #
 print(series.a)  # should be 5
 print(series.a[1])  # should be 4
