@@ -217,7 +217,7 @@ class Series:
         track_history_mode: int = 0,
         window_size: int = 200,
         initial_update: bool = False,
-        dtypes: dict[type, type] = {int: np.int64, float: np.float128},
+        dtypes: dict[type, type] = {int: np.int64, float: np.float32},
     ) -> None:
         """
         Args:
