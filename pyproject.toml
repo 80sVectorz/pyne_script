@@ -1,16 +1,22 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["pyne_script*"]
+namespaces = false
 
 [project]
 name = "pyne_script_utilities"
-version = "1.0.1"
+version = "1.0.3"
 authors = [
   { name="80sVectorz"},
 ]
 description = "A set of utility sub-modules that allow for code structure similar to pinescript in python"
 readme = "README.md"
 requires-python = ">=3.10"
+dependencies = ["numpy"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
