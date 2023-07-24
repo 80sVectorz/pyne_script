@@ -309,7 +309,7 @@ class Series:
                 elif len(data) != length_ticker:
                     raise SeriesInvalidKeyValuePairs_Length()
                 for element in data:
-                    if not isinstance(element, int | float):
+                    if not isinstance(element, int | float | np.number):
                         raise SeriesInvalidKeyValuePairs_Numeric(key)
 
                 self.series_types[key] = series_type
