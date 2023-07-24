@@ -85,12 +85,13 @@ class SeriesHeadObject:
                     }.items():
                         if slice_index == None:
                             indices[index_type] = slice_index
-                            if self.track_history_mode in [1,2]:
+                            if self.track_history_mode in [1, 2]:
                                 values = self.history
                             elif self.track_history_mode == 0:
                                 values = self.values[
-                                -min(self.window_size, self.head_position[0]) :]
-                                if self.window_size == self.head_position[0]+1:
+                                    -min(self.window_size, self.head_position[0]) :
+                                ]
+                                if self.window_size == self.head_position[0] + 1:
                                     values = self.values
                             continue
                         index_checked = self.index(slice_index, error=True)
@@ -103,8 +104,9 @@ class SeriesHeadObject:
                             and not overflow_window
                         ):
                             values = self.values[
-                                -min(self.window_size, self.head_position[0]) :]
-                            if self.window_size == self.head_position[0]+1:
+                                -min(self.window_size, self.head_position[0]) :
+                            ]
+                            if self.window_size == self.head_position[0] + 1:
                                 values = self.values
                         else:
                             values = self.history
@@ -337,7 +339,6 @@ class Series:
                                 key_value_pairs[key][:-1]
                             )
 
-
                 if self.track_history_mode in [
                     0,
                     2,
@@ -354,9 +355,17 @@ class Series:
                         )
 
                     if length_ticker > 2:
-                        B = np.pad(np.array(key_value_pairs[key][
-                            -min(window_size+1, length_ticker) : -1]),(max(window_size-(length_ticker-1),0),0),"constant",constant_values=(0))
-                        self.values[series_type][i]+=B # type: ignore
+                        B = np.pad(
+                            np.array(
+                                key_value_pairs[key][
+                                    -min(window_size + 1, length_ticker) : -1
+                                ]
+                            ),
+                            (max(window_size - (length_ticker - 1), 0), 0),
+                            "constant",
+                            constant_values=(0),
+                        )
+                        self.values[series_type][i] += B  # type: ignore
 
         if initial_update:
             self.update()
