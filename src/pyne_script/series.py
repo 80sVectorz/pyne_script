@@ -11,12 +11,14 @@ class SeriesHeadObject:
     window_size: int | None
     values: np.ndarray | None
     history: list[int | float] | None
+    head_position: list[int]
 
     def __init__(
         self,
         value: float | int,
         key: str | int,
         track_history_mode: int,
+        head_position: list[int],
         window_size: int | None = 200,
         values: np.ndarray | None = None,
         history: None | list[int | float] = None,
@@ -27,6 +29,7 @@ class SeriesHeadObject:
         self.window_size = window_size
         self.values = values
         self.history = history
+        self.head_position = head_position
 
     def __setitem__(self, *_) -> None:
         raise SeriesCannotMutateHistory()
@@ -71,11 +74,25 @@ class SeriesHeadObject:
                     else:
                         values = self.history
 
-                    out.append(values[-index])  # type: ignore
+                    out.append(values[:-1][-index])  # type: ignore
                     break
                 case slice():
                     values = None
-                    for slice_index in [index.start, index.stop]:
+                    indices = {}
+                    for index_type, slice_index in {
+                        "start": index.start,
+                        "stop": index.stop,
+                    }.items():
+                        if slice_index == None:
+                            indices[index_type] = slice_index
+                            if self.track_history_mode in [1,2]:
+                                values = self.history
+                            elif self.track_history_mode == 0:
+                                values = self.values[
+                                -min(self.window_size, self.head_position[0]) :]
+                                if self.window_size == self.head_position[0]+1:
+                                    values = self.values
+                            continue
                         index_checked = self.index(slice_index, error=True)
                         overflow_window = index_checked[1]
                         if self.track_history_mode == 1:
@@ -85,20 +102,24 @@ class SeriesHeadObject:
                             and self.track_history_mode in [0, 2]
                             and not overflow_window
                         ):
-                            values = self.values
+                            values = self.values[
+                                -min(self.window_size, self.head_position[0]) :]
+                            if self.window_size == self.head_position[0]+1:
+                                values = self.values
                         else:
                             values = self.history
+                        indices[index_type] = -slice_index
 
                     if index.step:
                         try:
                             out.append(
-                                values[-index.start : -index.stop : index.step]  # type: ignore
+                                values[indices["start"] : indices["stop"] : index.step]  # type: ignore
                             )
                         except:
                             raise SeriesIndexError(self.key)
                     else:
                         try:
-                            out.append(values[-index.start : -index.stop])  # type: ignore
+                            out.append(values[indices["start"] : indices["stop"]])  # type: ignore
                         except:
                             raise SeriesIndexError(self.key)
 
@@ -117,6 +138,7 @@ class SeriesHeadObjectFloat(float, SeriesHeadObject):
         val: float,
         key: str | int,
         track_history_mode: int,
+        head_position: list[int],
         window_size: int | None = 200,
         values: np.ndarray | None = None,
         history: None | list[int | float] = None,
@@ -125,6 +147,7 @@ class SeriesHeadObjectFloat(float, SeriesHeadObject):
         i.values = values
         i.key = key
         i.track_history_mode = track_history_mode
+        i.head_position = head_position
         i.window_size = window_size
         i.values = values
         i.history = history
@@ -135,6 +158,7 @@ class SeriesHeadObjectFloat(float, SeriesHeadObject):
         val: float,
         key: str | int,
         track_history_mode: int,
+        head_position: list[int],
         window_size: int | None = 200,
         values: np.ndarray | None = None,
         history: None | list[int | float] = None,
@@ -142,10 +166,13 @@ class SeriesHeadObjectFloat(float, SeriesHeadObject):
         self.val = val
         self.key = key
         self.track_history_mode = track_history_mode
+        self.head_position = head_position
         self.window_size = window_size
         self.values = values
         self.history = history
-        super().__init__(val, key, track_history_mode, window_size, values, history)
+        super().__init__(
+            val, key, track_history_mode, head_position, window_size, values, history
+        )
 
     def __str__(self):
         return self.value.__str__()
@@ -160,6 +187,7 @@ class SeriesHeadObjectInteger(int, SeriesHeadObject):
         val: int,
         key: str | int,
         track_history_mode: int,
+        head_position: list[int],
         window_size: int | None = 200,
         values: np.ndarray | None = None,
         history: None | list[int | float] = None,
@@ -168,6 +196,7 @@ class SeriesHeadObjectInteger(int, SeriesHeadObject):
         i.values = values
         i.key = key
         i.track_history_mode = track_history_mode
+        i.head_position = head_position
         i.window_size = window_size
         i.values = values
         i.history = history
@@ -178,6 +207,7 @@ class SeriesHeadObjectInteger(int, SeriesHeadObject):
         val: int,
         key: str | int,
         track_history_mode: int,
+        head_position: list[int],
         window_size: int | None = 200,
         values: np.ndarray | None = None,
         history: None | list[int | float] = None,
@@ -185,10 +215,13 @@ class SeriesHeadObjectInteger(int, SeriesHeadObject):
         self.val = val
         self.key = key
         self.track_history_mode = track_history_mode
+        self.head_position = head_position
         self.window_size = window_size
         self.values = values
         self.history = history
-        super().__init__(val, key, track_history_mode, window_size, values, history)
+        super().__init__(
+            val, key, track_history_mode, head_position, window_size, values, history
+        )
 
     def __str__(self):
         return self.value.__str__()
@@ -202,7 +235,7 @@ class Series:
     key_mappings: dict[str | int, int]
     values: dict[type, np.ndarray | None]
     heads: dict[type, np.ndarray | None]
-    head_positions: int
+    head_positions: list[int]
     window_size: int
     heads_assigned: set[int | str]
     series_types: dict[str | int, type]
@@ -239,6 +272,7 @@ class Series:
         self.keys = set()
         self.key_mappings = {}
         self.series_types = {}
+        self.head_positions = [0]
         self.values = {}
         self.heads = {}
         self.track_history_mode = track_history_mode
@@ -288,7 +322,11 @@ class Series:
                     )
 
                 self.heads_assigned = set(key_value_pairs.keys())
-                self.head_positions = length_ticker - 1
+                self.head_positions[0] = length_ticker - 1
+
+                self.heads[series_type][self.key_mappings[key]] = copy.copy(
+                    key_value_pairs[key][-1]
+                )
 
                 if self.track_history_mode in [1, 2]:  # use unbounded history tracking
                     self.history = {}
@@ -299,9 +337,6 @@ class Series:
                                 key_value_pairs[key][:-1]
                             )
 
-                        self.heads[series_type][self.key_mappings[key]] = copy.copy(
-                            key_value_pairs[key][-1]
-                        )
 
                 if self.track_history_mode in [
                     0,
@@ -319,10 +354,9 @@ class Series:
                         )
 
                     if length_ticker > 2:
-                        self.values[series_type][ #type: ignore
-                            i, -min([window_size, length_ticker - 2]) :
-                        ] = np.array(key_value_pairs[key])[
-                            -min([window_size, length_ticker - 1]) : -1]  # type: ignore
+                        B = np.pad(np.array(key_value_pairs[key][
+                            -min(window_size+1, length_ticker) : -1]),(max(window_size-(length_ticker-1),0),0),"constant",constant_values=(0))
+                        self.values[series_type][i]+=B # type: ignore
 
         if initial_update:
             self.update()
@@ -362,8 +396,8 @@ class Series:
         if not all_assigned:
             raise PrematureSeriesUpdate(unassigned_heads)
 
-        index = self.index(self.head_positions + 1)
-        self.head_positions = index[0]
+        index = self.index(self.head_positions[0] + 1)
+        self.head_positions[0] = index[0]
         if self.track_history_mode in [0, 2]:
             if self.track_history_mode in [0, 2]:
                 if int in self.values.keys():
@@ -385,18 +419,19 @@ class Series:
 
         if isinstance(key, str | int):
             if key in self.keys:
-                if self.head_positions > 0:
+                if self.head_positions[0] > 0:
                     values = None
                     history = None
                     if self.track_history_mode in [0, 2]:
-                        values = self.values[self.series_types[key]][self.key_mappings[key]][:-1]  # type: ignore
+                        values = self.values[self.series_types[key]][self.key_mappings[key]]  # type: ignore
                     if self.track_history_mode in [1, 2]:
-                        history = self.history[key][:-1]  # type: ignore
+                        history = self.history[key]  # type: ignore
                     if self.series_types[key] == int:
                         return SeriesHeadObjectInteger(
                             val=int(self.heads[int][self.key_mappings[key]]),
                             key=key,
                             track_history_mode=self.track_history_mode,
+                            head_position=self.head_positions,
                             window_size=self.window_size,
                             values=values,
                             history=history,
@@ -406,6 +441,7 @@ class Series:
                             self.heads[float][self.key_mappings[key]],
                             key=key,
                             track_history_mode=self.track_history_mode,
+                            head_position=self.head_positions,
                             window_size=self.window_size,
                             values=values,
                             history=history,
@@ -420,12 +456,12 @@ class Series:
     def __getattribute__(self, __name: str) -> Any:
         keys = None
         try:
-            keys = object.__getattribute__(self,"keys")
+            keys = object.__getattribute__(self, "keys")
         except:
             pass
         if keys and __name in keys:
             return self.__getitem__(__name)
-        return object.__getattribute__(self,__name)
+        return object.__getattribute__(self, __name)
 
     def __setitem__(self, key: str | int, value: int | float) -> None:
         if isinstance(key, list | tuple):
@@ -433,7 +469,9 @@ class Series:
 
         if isinstance(key, str | int):
             if key in self.keys:
-                self.heads[self.series_types[key]][self.key_mappings[key]] = self.series_types[key](value)
+                self.heads[self.series_types[key]][
+                    self.key_mappings[key]
+                ] = self.series_types[key](value)
                 self.heads_assigned.add(key)
             else:
                 raise NonExistentHead(key, "set")
@@ -443,13 +481,13 @@ class Series:
     def __setattr__(self, __name: str, __value: Any) -> None:
         keys = None
         try:
-            keys = object.__getattribute__(self,"keys")
+            keys = object.__getattribute__(self, "keys")
         except:
             pass
         if keys and __name in keys:
-            self.__setitem__(__name,__value)
+            self.__setitem__(__name, __value)
             return
-        object.__setattr__(self,__name,__value)
+        object.__setattr__(self, __name, __value)
 
 
 class PyneSeriesException(Exception):
@@ -558,6 +596,7 @@ class SeriesInvalidKeyValuePairs_Format(PyneSeriesException):
     def __str__(self) -> str:
         msg = """Series init recieved invalid key value pairs: Invalid format. Dictionary of string or int keys and equal length numeric list value pairs excpected."""
         return msg
+
 
 class SeriesInvalidKeyValuePairs_Duplicate(PyneSeriesException):
     """When Series init reveives key value pairs with duplicate keys
