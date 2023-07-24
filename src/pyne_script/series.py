@@ -281,7 +281,7 @@ class Series:
         self.window_size = window_size
 
         if self.track_history_mode not in [0, 1, 2]:
-            pass
+            raise SeriesInvalidTrackHistoryMode()
 
         length_ticker = -1
         series_type_pairs = {int: key_value_pairs_int, float: key_value_pairs_float}
@@ -314,11 +314,11 @@ class Series:
 
                 self.series_types[key] = series_type
 
-                if series_type == int:
+                if series_type == int and int not in self.heads.keys():
                     self.heads[int] = np.zeros(
                         len(key_value_pairs.values()), dtype=dtypes[int]
                     )
-                else:
+                elif series_type == float and float not in self.heads.keys():
                     self.heads[float] = np.zeros(
                         len(key_value_pairs.values()), dtype=dtypes[float]
                     )
@@ -343,12 +343,12 @@ class Series:
                     0,
                     2,
                 ]:  # use bounded rolling window tracking
-                    if series_type == int:
+                    if series_type == int and int not in self.values.keys():
                         self.values[int] = np.zeros(
                             (len(key_value_pairs.values()), window_size),
                             dtype=dtypes[int],
                         )
-                    else:
+                    elif series_type == float and float not in self.values.keys():
                         self.values[float] = np.zeros(
                             (len(key_value_pairs.values()), window_size),
                             dtype=dtypes[float],
@@ -636,3 +636,9 @@ class SeriesInvalidKeyValuePairs_Zero(PyneSeriesException):
 
     def __str__(self) -> str:
         return "Series init recieved invalid key value pairs: List values must have at least one element."
+
+class SeriesInvalidTrackHistoryMode(PyneSeriesException):
+    """When Series init reveives invalid track_history_mode"""
+
+    def __str__(self) -> str:
+        return "Series init recieved invalid track_history_mode: Track history mode should be one of 0, 1 or 2."
