@@ -16,7 +16,8 @@ def test_series_short():
             assert series[key] == 5
             assert series[key][1] == 4
 
-            series[key] = 6
+            series["a"] = 6
+            series["b"] = 6
             series.update()
             assert series[key] == 6
             assert series[key][1] == 5
