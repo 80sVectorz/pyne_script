@@ -2,6 +2,8 @@ from pyne_script.series import Series
 
 def test_series_short():
     for history_mode in [0,1,2]:
+
+        print("History_mode:",history_mode)
         for key in ["a","b"]:
             series = Series(
                 key_value_pairs_int={"a": list(range(0, 6)),"b":list(range(0,6))},
@@ -9,10 +11,10 @@ def test_series_short():
                 initial_update=True,
                 window_size=10
             )
-            print("History_mode:",history_mode)
+            print("Key:",key)
 
             assert series[key] == 5
-            assert series[key] == 4
+            assert series[key][1] == 4
 
             series[key] = 6
             series.update()
