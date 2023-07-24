@@ -637,6 +637,7 @@ class SeriesInvalidKeyValuePairs_Zero(PyneSeriesException):
     def __str__(self) -> str:
         return "Series init recieved invalid key value pairs: List values must have at least one element."
 
+
 class SeriesInvalidTrackHistoryMode(PyneSeriesException):
     """When Series init reveives invalid track_history_mode"""
 
